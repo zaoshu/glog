@@ -116,7 +116,7 @@ func TestInfoDepth(t *testing.T) {
 	}
 
 	for i, m := range msgs {
-		if !strings.HasPrefix(m, "I") {
+		if !strings.HasPrefix(m, "[") {
 			t.Errorf("InfoDepth[%d] has wrong character: %q", i, m)
 		}
 		w := fmt.Sprintf("depth-test%d", i)
@@ -178,10 +178,11 @@ func TestHeader(t *testing.T) {
 	timeNow = func() time.Time {
 		return time.Date(2006, 1, 2, 15, 4, 5, .067890e9, time.Local)
 	}
+	hostname := "localhost"
 	pid = 1234
 	Info("test")
 	var line int
-	format := "I0102 15:04:05.067890    1234 " + os.Getenv("GOPATH") + "/src/github.com/golang/glog/glog_test.go:%d] test\n"
+	format := "[I 20060102 15:04:05.067890    1234 " + hostname + " " + os.Getenv("GOPATH") + "/src/github.com/zaoshu/glog/glog_test.go:%d] test\n"
 	n, err := fmt.Sscanf(contents(infoLog), format, &line)
 	if n != 1 || err != nil {
 		t.Errorf("log format error: %d elements, error %s:\n%s", n, err, contents(infoLog))
