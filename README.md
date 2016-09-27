@@ -1,5 +1,7 @@
 > Modification:
+> 
 > Log format header: `[%(severity char)c %(year+month+day)s %(hour:minute:second.nanosecond)s %(pid)d %(hostname)s %(filepath)s:%(line)d] %(message)s`
+> 
 > Example: `[I 20160922 15:56:09.026932   14755 localhost glog_test.go:164] test`
 
 glog
