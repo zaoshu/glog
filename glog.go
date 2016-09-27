@@ -593,46 +593,6 @@ func (l *loggingT) formatHeader(s severity, file string, line int) *buffer {
 	return buf
 }
 
-//// formatHeader formats a log header using the provided file name and line number.
-//func (l *loggingT) formatHeader(s severity, file string, line int) *buffer {
-//	now := timeNow()
-//	if line < 0 {
-//		line = 0 // not a real line number, but acceptable to someDigits
-//	}
-//	if s > fatalLog {
-//		s = infoLog // for safety.
-//	}
-//	buf := l.getBuffer()
-//
-//	// Avoid Fprintf, for speed. The format is so simple that we can do it quickly by hand.
-//	// It's worth about 3X. Fprintf is hard.
-//	_, month, day := now.Date()
-//	hour, minute, second := now.Clock()
-//	// Lmmdd hh:mm:ss.uuuuuu threadid file:line]
-//	buf.tmp[0] = severityChar[s]
-//	buf.twoDigits(1, int(month))
-//	buf.twoDigits(3, day)
-//	buf.tmp[5] = ' '
-//	buf.twoDigits(6, hour)
-//	buf.tmp[8] = ':'
-//	buf.twoDigits(9, minute)
-//	buf.tmp[11] = ':'
-//	buf.twoDigits(12, second)
-//	buf.tmp[14] = '.'
-//	buf.nDigits(6, 15, now.Nanosecond()/1000, '0')
-//	buf.tmp[21] = ' '
-//	buf.nDigits(7, 22, pid, ' ') // TODO: should be TID
-//	buf.tmp[29] = ' '
-//	buf.Write(buf.tmp[:30])
-//	buf.WriteString(file)
-//	buf.tmp[0] = ':'
-//	n := buf.someDigits(1, line)
-//	buf.tmp[n+1] = ']'
-//	buf.tmp[n+2] = ' '
-//	buf.Write(buf.tmp[:n+3])
-//	return buf
-//}
-
 // Some custom tiny helper functions to print the log header efficiently.
 
 const digits = "0123456789"
@@ -1072,6 +1032,14 @@ func V(level Level) Verbose {
 	return Verbose(false)
 }
 
+// Info is equivalent to the global Info function, guarded by the value of v and depth configurable
+// See the documentation of V for usage.
+func (v Verbose) InfoDepth(depth int, args ...interface{}) {
+	if v {
+		logging.printDepth(infoLog, depth, args...)
+	}
+}
+
 // Info is equivalent to the global Info function, guarded by the value of v.
 // See the documentation of V for usage.
 func (v Verbose) Info(args ...interface{}) {
@@ -1082,9 +1050,32 @@ func (v Verbose) Info(args ...interface{}) {
 
 // Infoln is equivalent to the global Infoln function, guarded by the value of v.
 // See the documentation of V for usage.
+func (v Verbose) InfolnDepth(depth int, args ...interface{}) {
+	if v {
+		buf, file, line := logging.header(infoLog, depth)
+		fmt.Fprintln(buf, args...)
+		logging.output(infoLog, buf, file, line, false)
+	}
+}
+
+// Infoln is equivalent to the global Infoln function, guarded by the value of v.
+// See the documentation of V for usage.
 func (v Verbose) Infoln(args ...interface{}) {
 	if v {
 		logging.println(infoLog, args...)
+	}
+}
+
+// Infof is equivalent to the global Infof function, guarded by the value of v.
+// See the documentation of V for usage.
+func (v Verbose) InfofDepth(depth int, format string, args ...interface{}) {
+	if v {
+		buf, file, line := logging.header(infoLog, depth)
+		fmt.Fprintf(buf, format, args...)
+		if buf.Bytes()[buf.Len()-1] != '\n' {
+			buf.WriteByte('\n')
+		}
+		logging.output(infoLog, buf, file, line, false)
 	}
 }
 
